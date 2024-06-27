@@ -1,0 +1,49 @@
+version: '3'
+
+networks:
+  locdev:
+    driver: bridge
+
+services:
+  nginx:
+    build:
+      context: ./images/nginx
+    container_name: ${CONTAINER_NAME_PREFIX}-nginx
+    restart: unless-stopped
+    volumes:
+      - ./images/nginx:/etc/nginx/conf.d/
+      - ../orchid/core:/var/www/orchid
+    ports:
+      - "8080:80"
+    depends_on:
+      - orchid_php
+    networks:
+      - locdev
+
+  orchid_php:
+    build: 
+      context: ./images/orchid_php
+    container_name: ${CONTAINER_NAME_PREFIX}-php
+    restart: unless-stopped
+    volumes:
+      - ../orchid/core:/var/www/orchid
+    ports:
+      - "9010:9010"
+    networks:
+      - locdev
+  
+  orchid_mysql:
+    image: mysql:8.0.26
+    container_name: ${CONTAINER_NAME_PREFIX}-mysql
+    restart: unless-stopped
+    ports:
+      - "3316:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MSYQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    networks:
+      - locdev
